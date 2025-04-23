@@ -1,7 +1,7 @@
 ---
-title: "Lab 11 - Grading the professor, Pt. 2"
-author: "Insert your name here"
-date: "Insert date here"
+title: "Lab 10 - Grading the professor, Pt. 2"
+author: "Zi Li"
+date: "4/23"
 output: github_document
 ---
 
@@ -13,24 +13,74 @@ library(tidymodels)
 library(openintro)
 ```
 
-## Exercise 1
-
-*Provide your answer here.*  
-Add code chunks as needed. Ensure code chunks are properly labeled without spaces.
+## Exercise 1- Part 1 & 2.
 
 ```{r exercise1_code}
-# Add your R code here
+library(tidyverse)
+library(broom)
+#> Warning: package 'broom' was built under R version 4.4.3
+library(openintro)
+
+# Part 1
+m_bty <- lm(score ~ bty_avg, data = evals)
+summary(m_bty)
+summary(m_bty)$r.squared
+summary(m_bty)$adj.r.squared 
+# Intercept (3.88) is the expected course evaluation score for a female professor with a beauty score of 0 (since female is the reference group).
+# slope (0.067):For every one-point increase in beauty rating, the professor's evaluation score is predicted to increase by about 0.067 points.
+#only about 3.5% of the variance in professor evaluation scores is explained by beauty rating alone.
+
+
+# Part 2: Multiple linear regression with gender
+m_bty_gen <- lm(score ~ bty_avg + gender, data = evals)
+summary(m_bty_gen)
+summary(m_bty_gen)$r.squared
+summary(m_bty_gen)$adj.r.squared # Adding gender increased the adjusted R². 
+coef(m_bty)["bty_avg"]
+coef(m_bty_gen)["bty_avg"] # The slope increased slightly when gender was added, meaning beauty’s effect got a bit stronger when accounting for gender. 
+
+
+# Equation for male professors (male is the reference group)
+coef(m_bty_gen) # For two professors who received the same beauty rating, Male professors tend to get higher rating. 
+# beauty influences evaluation scores pretty much equally across genders, but male professors seems to have a higher baseline.
+
+
+# with Rank
+m_bty_rank <- lm(score ~ bty_avg + rank, data = evals)
+summary(m_bty_rank)
+# bty_avg (0.068): Each additional beauty point increases score by 0.068 points, holding rank constant.
+# ranktenure_track (-0.161): Tenure-track professors score 0.161 points lower than non-tenure-track, holding beauty constant.
+# ranktenured (-0.126): Tenured professors score 0.126 points lower than non-tenure-track, holding beauty constant.
+
 ```
 
-## Exercise 2
+## Exercise 2-Part 3
 
-*Provide your answer here.*  
-Add code chunks as needed.
+```{r exercisePart3_code}
+# I would expect ethnicity to be the worst predictor. 
 
-```{r exercise2_code}
-# Add your R code here
+m_ethnicity <- lm(score ~ ethnicity, data = evals)
+summary(m_ethnicity) # P=0.1; nice, ethnicity it is. 
+
+
+# cls_did_eval should be exclude; if we wanna include cls_perc_eval and cls_students. Due to the multicollinearity, we need make sure our predictor shouldn't be too correlated. 
+
+full_model <- lm(score ~ rank + ethnicity + gender + language + age +
+                   cls_perc_eval + cls_students + cls_level + cls_profs +
+                   cls_credits + bty_avg, data = evals)
+summary(full_model)
+
+
+library(MASS)
+step_model <- stepAIC(full_model, direction = "backward", k = log(nrow(evals)))
+summary(step_model)
+
+formula(step_model)
+# final equation would be : score ~ ethnicity(not minority) + gender + cls_perc_eval + cls_credits + bty_avg
+# based on my result, Credits (one-credit course)	have a slop of +0.54, One-credit courses are rated 0.54 points higher than multi-credit ones. This is a large effect.
+
+# Although my results are fairly reliable, I feel that more analysis is needed, such as finding causal effects, etc., if they are to be generalized to a larger population.
+
 ```
 
-## Additional Exercises
 
-*Repeat the format above for additional exercises.*
